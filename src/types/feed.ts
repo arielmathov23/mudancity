@@ -85,6 +85,7 @@ export type PublicFeedProduct = FeedItem & {
 export type ProductFeedSlideProps = {
   product: PublicFeedProduct;
   isPriority?: boolean;
+  isOwner?: boolean;
 };
 
 export type ProductVerticalFeedProps = {

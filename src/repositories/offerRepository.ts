@@ -1,17 +1,22 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/routeHandler';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getPhotoPublicUrl, mapItem, mapOffer } from '@/lib/mappers/marketplace';
 import type { Offer, OfferWithDetails, BuyerOffer, Item } from '@/types/marketplace';
 
-export const createOffer = async (input: {
-  publicationId: string;
-  moveId: string;
-  buyerId: string;
-  offeredPrice: number;
-  itemIds: string[];
-}): Promise<Offer> => {
-  const supabase = await createClient();
+export const createOffer = async (
+  input: {
+    publicationId: string;
+    moveId: string;
+    buyerId: string;
+    offeredPrice: number;
+    itemIds: string[];
+  },
+  supabaseClient?: SupabaseClient,
+): Promise<Offer> => {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('offers')
     .insert({

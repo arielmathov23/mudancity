@@ -19,10 +19,13 @@ import {
 
 export const completeOnboardingAction = async (input: unknown) => {
   const user = await requireAuthApp();
+  if (!user.email) {
+    return { success: false as const, error: 'No encontramos tu email. Volvé a iniciar sesión.' };
+  }
   const parsed = onboardingSchema.safeParse(input);
   if (!parsed.success) return { success: false as const, error: parsed.error.errors[0]?.message ?? 'Datos inválidos' };
 
-  const result = await completeOnboardingWithAuth(user.id, parsed.data);
+  const result = await completeOnboardingWithAuth(user.id, { ...parsed.data, email: user.email });
   if (!result.success) return { success: false as const, error: result.error };
   revalidatePath('/perfil');
   return { success: true as const, data: result.data };

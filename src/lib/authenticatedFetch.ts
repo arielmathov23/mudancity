@@ -1,7 +1,7 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 import { createClient } from '@/lib/supabase/client';
 
-const api = axios.create({ baseURL: '/api' });
+const api = axios.create({ baseURL: '/api', withCredentials: true });
 
 api.interceptors.request.use(async (config) => {
   const supabase = createClient();

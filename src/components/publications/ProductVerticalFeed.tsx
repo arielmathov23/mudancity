@@ -122,7 +122,11 @@ export const ProductVerticalFeed = ({
             className={cn(PRODUCT_FEED_SLIDE_CLASS, 'overflow-hidden')}
             style={slideStyle}
           >
-            <ProductFeedSlide product={product} isPriority={index === initialIndex} />
+            <ProductFeedSlide
+              product={product}
+              isPriority={index === initialIndex}
+              isOwner={!!currentUserId && product.ownerId === currentUserId}
+            />
           </section>
         ))}
         {isFetchingMore && (

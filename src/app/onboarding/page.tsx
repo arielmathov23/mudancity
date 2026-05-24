@@ -6,7 +6,7 @@ import { getSessionProfile, isProfileComplete } from '@/lib/auth/session';
 export default async function OnboardingPage() {
   const { user, profile } = await getSessionProfile();
   if (!user) redirect('/login');
-  if (isProfileComplete(profile)) redirect('/');
+  if (isProfileComplete(profile, user.email)) redirect('/');
 
   return (
     <Suspense fallback={<div className="p-8 text-center">Cargando...</div>}>

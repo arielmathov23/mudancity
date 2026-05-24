@@ -15,5 +15,7 @@ export const getSessionProfile = async (): Promise<{
   return { user: { id: user.id, email: user.email }, profile };
 };
 
-export const isProfileComplete = (profile: Profile | null): boolean =>
-  !!(profile?.email && profile?.phone);
+export const isProfileComplete = (
+  profile: Profile | null,
+  authEmail?: string | null,
+): boolean => !!(profile?.phone && (profile?.email || authEmail));

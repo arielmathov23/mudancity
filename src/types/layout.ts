@@ -17,3 +17,8 @@ export type AppShellProps = {
   header?: AppHeaderProps;
   contentClassName?: string;
 };
+
+export type FixedBottomActionBarProps = {
+  children: ReactNode;
+  className?: string;
+};

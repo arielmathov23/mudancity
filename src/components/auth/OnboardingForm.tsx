@@ -12,7 +12,6 @@ export const OnboardingForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? '/';
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +20,7 @@ export const OnboardingForm = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const result = await completeOnboardingAction({ email, phone });
+    const result = await completeOnboardingAction({ phone });
     setLoading(false);
     if (!result.success) {
       setError(result.error);
@@ -38,14 +37,10 @@ export const OnboardingForm = () => {
           <p className="text-xs font-mono uppercase tracking-widest text-teal-600">Mudancity</p>
           <h1 className="mt-2 text-2xl font-bold">Completá tu perfil</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Necesitamos tu contacto para enviar ofertas
+            Necesitamos tu teléfono para enviar ofertas
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-white" />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono</Label>
             <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="bg-white" />

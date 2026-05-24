@@ -1,14 +1,15 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/routeHandler';
 
 export type AuthUser = {
   id: string;
   email?: string;
 };
 
-export const verifyAuthApp = async (): Promise<AuthUser | null> => {
-  const supabase = await createClient();
+export const verifyAuthApp = async (request?: Request): Promise<AuthUser | null> => {
+  const supabase = request ? await createClientFromRequest(request) : await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   return { id: user.id, email: user.email };

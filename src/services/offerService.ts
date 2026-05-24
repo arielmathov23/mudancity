@@ -1,8 +1,9 @@
 import 'server-only';
 
+import { createClientFromRequest } from '@/lib/supabase/routeHandler';
 import { createServiceLogger } from '@/lib/logger';
 import type { CreateOfferInput } from '@/lib/validation/schemas';
-import { getProfileById, getBuyerContactById } from '@/repositories/profileRepository';
+import { getProfileById, getBuyerContactById, updateProfileContact } from '@/repositories/profileRepository';
 import {
   createOffer,
   getOfferById,
@@ -20,14 +21,30 @@ const logger = createServiceLogger('offerService');
 export const createOfferWithAuth = async (
   userId: string,
   input: CreateOfferInput,
+  options?: { authEmail?: string; request?: Request },
 ): Promise<ServiceResult<{ offerId: string }>> => {
-  const [profile, publication] = await Promise.all([
+  const authEmail = options?.authEmail;
+  const [profileRow, publication] = await Promise.all([
     getProfileById(userId),
     getPublicationById(input.publicationId),
   ]);
 
-  if (!profile?.email || !profile?.phone) {
-    return { success: false, error: 'Completá email y teléfono antes de ofertar', status: 400 };
+  let profile = profileRow;
+  if (!profile?.phone) {
+    return { success: false, error: 'Completá tu teléfono antes de ofertar', status: 400 };
+  }
+
+  const resolvedEmail = profile.email ?? authEmail;
+  if (!resolvedEmail) {
+    return { success: false, error: 'Completá tu email antes de ofertar', status: 400 };
+  }
+
+  if (!profile.email && authEmail) {
+    profile = await updateProfileContact(userId, {
+      email: authEmail,
+      phone: profile.phone,
+      displayName: profile.displayName ?? undefined,
+    });
   }
 
   if (!publication) {
@@ -48,13 +65,16 @@ export const createOfferWithAuth = async (
     return { success: false, error: 'Selección no válida para esta publicación', status: 400 };
   }
 
-  const offer = await createOffer({
-    publicationId: input.publicationId,
-    moveId: publication.moveId,
-    buyerId: userId,
-    offeredPrice: input.offeredPrice,
-    itemIds: input.itemIds,
-  });
+  const offer = await createOffer(
+    {
+      publicationId: input.publicationId,
+      moveId: publication.moveId,
+      buyerId: userId,
+      offeredPrice: input.offeredPrice,
+      itemIds: input.itemIds,
+    },
+    options?.request ? await createClientFromRequest(options.request) : undefined,
+  );
 
   logger.info({ offerId: offer.id, publicationId: input.publicationId }, 'Offer created');
   return { success: true, data: { offerId: offer.id } };

@@ -32,11 +32,10 @@ export const MobileNavBar = ({ items }: MobileNavBarProps) => {
   const pathname = usePathname();
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center">
-      <nav
-        aria-label="Navegación principal"
-        className="nav-glass w-full max-w-md border-x border-line pb-[env(safe-area-inset-bottom)]"
-      >
+    <nav
+      aria-label="Navegación principal"
+      className="nav-glass fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-md border-x border-line pb-[env(safe-area-inset-bottom)]"
+    >
         <div className="grid grid-cols-4 divide-x divide-line">
           {items.map((item) => {
             const Icon = ICON_MAP[item.icon];
@@ -56,7 +55,6 @@ export const MobileNavBar = ({ items }: MobileNavBarProps) => {
             );
           })}
         </div>
-      </nav>
-    </div>
+    </nav>
   );
 };

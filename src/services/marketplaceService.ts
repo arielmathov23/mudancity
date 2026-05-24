@@ -8,8 +8,8 @@ import type {
   UpdatePublicationInput,
   CreateItemInput,
   UpdateItemInput,
-  OnboardingInput,
 } from '@/lib/validation/schemas';
+import type { CompleteOnboardingInput } from '@/lib/validation/schemas';
 import { updateProfileContact, updateProfileRole, getProfileById } from '@/repositories/profileRepository';
 import { createMove, deleteMove, getMoveById, getMovesByOwnerId, updateMove } from '@/repositories/moveRepository';
 import {
@@ -31,7 +31,7 @@ const logger = createServiceLogger('marketplaceService');
 
 export const completeOnboardingWithAuth = async (
   userId: string,
-  input: OnboardingInput,
+  input: CompleteOnboardingInput,
 ): Promise<ServiceResult<Profile>> => {
   const profile = await updateProfileContact(userId, {
     email: input.email,

@@ -7,7 +7,7 @@ import { formatMoveLocation } from '@/lib/location';
 import { PRODUCT_FEED_DETAILS_RESERVE } from '@/constants/productFeed';
 import type { ProductFeedSlideProps } from '@/types/feed';
 
-export const ProductFeedSlide = ({ product, isPriority = false }: ProductFeedSlideProps) => {
+export const ProductFeedSlide = ({ product, isPriority = false, isOwner = false }: ProductFeedSlideProps) => {
   const mudanzaTag = `Mudanza ${product.moveTitle}`;
   const locationLabel = formatMoveLocation(product);
   const defaultDescriptions = new Set([
@@ -69,10 +69,14 @@ export const ProductFeedSlide = ({ product, isPriority = false }: ProductFeedSli
           </p>
         )}
 
-        {product.status === 'open' ? (
+        {product.status === 'open' && !isOwner ? (
           <Button asChild className="w-full">
             <Link href={`/p/${product.publicSlug}/ofertar?item=${product.id}`}>Ofertar</Link>
           </Button>
+        ) : product.status === 'open' && isOwner ? (
+          <p className="py-2 text-center text-sm text-warm-muted">
+            Este es tu producto — no podés ofertar en tu propia publicación
+          </p>
         ) : (
           <p className="py-2 text-center text-sm text-warm-muted">Este producto no acepta ofertas</p>
         )}

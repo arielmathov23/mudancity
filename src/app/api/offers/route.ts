@@ -15,14 +15,17 @@ const logger = createApiLogger('offers');
 
 export const POST = async (request: Request) => {
   try {
-    const user = await verifyAuthApp();
+    const user = await verifyAuthApp(request);
     if (!user) return jsonError('No autorizado', 401);
 
     const body = await request.json();
     const validated = validateRequest(createOfferSchema, body);
     if (!validated.success) return jsonError(validated.error, 400);
 
-    const result = await createOfferWithAuth(user.id, validated.data);
+    const result = await createOfferWithAuth(user.id, validated.data, {
+      authEmail: user.email,
+      request,
+    });
     if (!result.success) return jsonError(result.error, result.status);
     return jsonOk(result.data, 201);
   } catch (error) {

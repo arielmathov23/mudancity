@@ -74,7 +74,6 @@ export const updateCoordinationSchema = z.object({
 });
 
 export const onboardingSchema = z.object({
-  email: z.string().email('Email inválido'),
   phone: z.string().min(8, 'Teléfono inválido').max(20),
   displayName: z.string().max(80).optional(),
 });
@@ -103,3 +102,5 @@ export type UpdateItemInput = z.infer<typeof updateItemSchema>;
 export type CreateOfferInput = z.infer<typeof createOfferSchema>;
 export type RespondOfferInput = z.infer<typeof respondOfferSchema>;
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
+
+export type CompleteOnboardingInput = OnboardingInput & { email: string };
