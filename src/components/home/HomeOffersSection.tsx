@@ -38,7 +38,7 @@ export const HomeOffersSection = ({ sentOffers, receivedOffers }: HomeOffersSect
           <p className="text-xs font-medium text-warm-muted">Enviadas</p>
           <div className="space-y-2">
             {sentPreview.map((offer) => (
-              <SentOfferCard key={offer.id} offer={offer} />
+              <SentOfferCard key={offer.id} offer={offer} context="home" />
             ))}
           </div>
         </div>

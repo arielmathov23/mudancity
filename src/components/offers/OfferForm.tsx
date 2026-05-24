@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { FixedBottomActionBar } from '@/components/layout/FixedBottomActionBar';
 import { ItemCard } from '@/components/publications/ItemCard';
 import { useCreateOffer } from '@/hooks/useOffers';
+import { getMisOfertasPath } from '@/lib/offers/misOfertasTab';
 import { numberToPriceRaw, parsePriceRawToNumber } from '@/lib/format/price';
 import type { CurrencyCode } from '@/constants/marketplace';
 import type { Item } from '@/types/marketplace';
@@ -92,7 +93,7 @@ export const OfferForm = ({ publicationId, items, isOpen, preselectedItemId }: O
         offeredPrice: data.offeredPrice,
         itemIds: selectedIds,
       });
-      router.push('/mis-ofertas');
+      router.push(getMisOfertasPath('sent'));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al enviar oferta');
     }

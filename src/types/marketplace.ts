@@ -78,6 +78,7 @@ export type OfferWithDetails = Offer & {
 export type BuyerOffer = Offer & {
   publicationTitle: string;
   publicationSlug: string;
+  items: Item[];
   response: OfferResponse | null;
   coordinationStatus: CoordinationStatus | null;
   coordinatedAt: string | null;
@@ -92,6 +93,7 @@ export type SentOfferStatusDisplay = {
 
 export type SentOfferCardProps = {
   offer: BuyerOffer;
+  context?: 'home' | 'list';
 };
 
 export type ReceivedOfferCardProps = {
@@ -101,11 +103,18 @@ export type ReceivedOfferCardProps = {
 export type OfferPreviewCardProps = {
   title: string;
   metaLabel?: string | null;
+  photoUrl?: string | null;
+  expandTitle?: boolean;
   createdAt: string;
   offeredPrice: number;
   status: SentOfferStatusDisplay;
   href: string;
   actionLabel: string;
+};
+
+export type OfferItemRowProps = {
+  item: Item;
+  href: string;
 };
 
 export type MoveKpis = {

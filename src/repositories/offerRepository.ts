@@ -94,22 +94,44 @@ export const getOffersByBuyerId = async (buyerId: string): Promise<BuyerOffer[]>
   if (!offers?.length) return [];
 
   const offerIds = offers.map((o) => o.id);
-  const [{ data: responses }, { data: coordinations }] = await Promise.all([
+  const [{ data: responses }, { data: coordinations }, { data: offerItems }] = await Promise.all([
     supabase.from('offer_responses').select('*').in('offer_id', offerIds),
     supabase.from('coordinations').select('*').in('offer_id', offerIds),
+    supabase.from('offer_items').select('*').in('offer_id', offerIds),
   ]);
 
   const responseMap = new Map((responses ?? []).map((r) => [r.offer_id, r]));
   const coordMap = new Map((coordinations ?? []).map((c) => [c.offer_id, c]));
 
+  const itemsByOffer = (offerItems ?? []).reduce<Record<string, string[]>>((acc, row) => {
+    acc[row.offer_id] = [...(acc[row.offer_id] ?? []), row.item_id];
+    return acc;
+  }, {});
+
+  const allItemIds = [...new Set((offerItems ?? []).map((row) => row.item_id))];
+  const { data: itemRows } = allItemIds.length
+    ? await supabase.from('items').select('*').in('id', allItemIds)
+    : { data: [] as Record<string, unknown>[] };
+
+  const itemMap = new Map(
+    (itemRows ?? []).map((row) => [
+      row.id as string,
+      mapItem(row, getPhotoPublicUrl(row.photo_path as string | null)),
+    ]),
+  );
+
   return offers.map((row) => {
     const pub = row.publications as { title: string; public_slug: string };
     const response = responseMap.get(row.id);
     const coord = coordMap.get(row.id);
+    const itemIds = itemsByOffer[row.id] ?? [];
+    const items = itemIds.map((id) => itemMap.get(id)).filter(Boolean) as Item[];
+
     return {
-      ...mapOffer(row, []),
+      ...mapOffer(row, itemIds),
       publicationTitle: pub.title,
       publicationSlug: pub.public_slug,
+      items,
       response: response?.response ?? null,
       coordinationStatus: coord?.status ?? null,
       coordinatedAt: coord?.coordinated_at ?? null,

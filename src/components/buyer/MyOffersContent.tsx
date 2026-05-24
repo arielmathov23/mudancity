@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { OfferList } from '@/components/offers/OfferList';
 import { SentOfferCard } from '@/components/buyer/SentOfferCard';
 import { useQuery } from '@tanstack/react-query';
 import { authenticatedFetch } from '@/lib/authenticatedFetch';
 import { useOwnerOffers } from '@/hooks/useOffers';
+import { getMisOfertasPath, parseMisOfertasTab } from '@/lib/offers/misOfertasTab';
 import type { BuyerOffer } from '@/types/marketplace';
 import { cn } from '@/lib/utils/cn';
 
@@ -17,7 +19,15 @@ interface MyOffersContentProps {
 }
 
 export const MyOffersContent = ({ defaultTab = 'sent', isOwner = false }: MyOffersContentProps) => {
-  const [tab, setTab] = useState<Tab>(isOwner ? defaultTab : 'sent');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = parseMisOfertasTab(searchParams.get('tab'));
+  const [tab, setTab] = useState<Tab>(tabFromUrl ?? (isOwner ? defaultTab : 'sent'));
+
+  const selectTab = (next: Tab) => {
+    setTab(next);
+    router.replace(getMisOfertasPath(next), { scroll: false });
+  };
 
   const { data: sentOffers, isLoading: loadingSent } = useQuery({
     queryKey: ['my-offers'],
@@ -32,7 +42,7 @@ export const MyOffersContent = ({ defaultTab = 'sent', isOwner = false }: MyOffe
         <div className="grid grid-cols-2 divide-x divide-line border border-line bg-surface">
           <button
             type="button"
-            onClick={() => setTab('sent')}
+            onClick={() => selectTab('sent')}
             className={cn(
               'py-2.5 text-xs font-medium transition-colors',
               tab === 'sent' ? 'bg-teal-600 text-white' : 'text-warm-muted hover:bg-cream-100',
@@ -42,7 +52,7 @@ export const MyOffersContent = ({ defaultTab = 'sent', isOwner = false }: MyOffe
           </button>
           <button
             type="button"
-            onClick={() => setTab('received')}
+            onClick={() => selectTab('received')}
             className={cn(
               'py-2.5 text-xs font-medium transition-colors',
               tab === 'received' ? 'bg-teal-600 text-white' : 'text-warm-muted hover:bg-cream-100',

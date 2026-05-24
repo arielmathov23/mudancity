@@ -11,6 +11,16 @@ export const formatOfferItemsLabel = (
   return `${count} producto${count !== 1 ? 's' : ''}`;
 };
 
+export const formatOfferItemsFullLabel = (
+  items: Pick<Item, 'name'>[],
+  itemIdsCount = 0,
+): string => {
+  if (items.length > 0) return items.map((item) => item.name).join(', ');
+  const count = itemIdsCount;
+  if (count === 0) return 'Varios productos';
+  return `${count} producto${count !== 1 ? 's' : ''}`;
+};
+
 export const formatOfferItemsMeta = (items: Pick<Item, 'name'>[], itemIdsCount = 0): string | null => {
   const count = items.length || itemIdsCount;
   if (count <= 1) return null;
