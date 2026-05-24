@@ -3,9 +3,13 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { mapProfile } from '@/lib/mappers/marketplace';
 import type { Profile, UserRole } from '@/types/marketplace';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const getProfileById = async (id: string): Promise<Profile | null> => {
-  const supabase = await createClient();
+export const getProfileById = async (
+  id: string,
+  supabaseClient?: SupabaseClient,
+): Promise<Profile | null> => {
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
   if (error) throw new Error(error.message);
   return data ? mapProfile(data) : null;
@@ -14,8 +18,9 @@ export const getProfileById = async (id: string): Promise<Profile | null> => {
 export const updateProfileContact = async (
   id: string,
   input: { email: string; phone: string; displayName?: string },
+  supabaseClient?: SupabaseClient,
 ): Promise<Profile> => {
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? await createClient();
   const { data, error } = await supabase
     .from('profiles')
     .update({

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createClientFromRequest } from '@/lib/supabase/routeHandler';
+import { createAdminClient } from '@/lib/supabase/server';
 import { createServiceLogger } from '@/lib/logger';
 import type { CreateOfferInput } from '@/lib/validation/schemas';
 import { getProfileById, getBuyerContactById, updateProfileContact } from '@/repositories/profileRepository';
@@ -24,8 +25,12 @@ export const createOfferWithAuth = async (
   options?: { authEmail?: string; request?: Request },
 ): Promise<ServiceResult<{ offerId: string }>> => {
   const authEmail = options?.authEmail;
+  const authSupabase = options?.request
+    ? await createClientFromRequest(options.request)
+    : undefined;
+
   const [profileRow, publication] = await Promise.all([
-    getProfileById(userId),
+    getProfileById(userId, authSupabase),
     getPublicationById(input.publicationId),
   ]);
 
@@ -39,12 +44,18 @@ export const createOfferWithAuth = async (
     return { success: false, error: 'Completá tu email antes de ofertar', status: 400 };
   }
 
+  const adminSupabase = createAdminClient();
+
   if (!profile.email && authEmail) {
-    profile = await updateProfileContact(userId, {
-      email: authEmail,
-      phone: profile.phone,
-      displayName: profile.displayName ?? undefined,
-    });
+    profile = await updateProfileContact(
+      userId,
+      {
+        email: authEmail,
+        phone: profile.phone,
+        displayName: profile.displayName ?? undefined,
+      },
+      adminSupabase,
+    );
   }
 
   if (!publication) {
@@ -65,19 +76,25 @@ export const createOfferWithAuth = async (
     return { success: false, error: 'Selección no válida para esta publicación', status: 400 };
   }
 
-  const offer = await createOffer(
-    {
-      publicationId: input.publicationId,
-      moveId: publication.moveId,
-      buyerId: userId,
-      offeredPrice: input.offeredPrice,
-      itemIds: input.itemIds,
-    },
-    options?.request ? await createClientFromRequest(options.request) : undefined,
-  );
+  try {
+    const offer = await createOffer(
+      {
+        publicationId: input.publicationId,
+        moveId: publication.moveId,
+        buyerId: userId,
+        offeredPrice: input.offeredPrice,
+        itemIds: input.itemIds,
+      },
+      adminSupabase,
+    );
 
-  logger.info({ offerId: offer.id, publicationId: input.publicationId }, 'Offer created');
-  return { success: true, data: { offerId: offer.id } };
+    logger.info({ offerId: offer.id, publicationId: input.publicationId }, 'Offer created');
+    return { success: true, data: { offerId: offer.id } };
+  } catch (error) {
+    logger.error({ error, userId, publicationId: input.publicationId }, 'Failed to create offer');
+    const message = error instanceof Error ? error.message : 'Error al crear oferta';
+    return { success: false, error: message, status: 500 };
+  }
 };
 
 export const respondToOfferWithAuth = async (
