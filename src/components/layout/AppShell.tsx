@@ -4,10 +4,19 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { MobileAppShell } from '@/components/layout/MobileAppShell';
 import type { AppShellProps } from '@/types/layout';
 
-export const AppShell = async ({ children, showNav = true, header }: AppShellProps) => {
+export const AppShell = async ({
+  children,
+  showNav = true,
+  header,
+  contentClassName,
+}: AppShellProps) => {
   const { user } = await getSessionProfile();
   return (
-    <MobileAppShell navItems={getAppNavItems(!!user)} showNav={showNav}>
+    <MobileAppShell
+      navItems={getAppNavItems(!!user)}
+      showNav={showNav}
+      contentClassName={contentClassName}
+    >
       {header && <AppHeader {...header} />}
       {children}
     </MobileAppShell>

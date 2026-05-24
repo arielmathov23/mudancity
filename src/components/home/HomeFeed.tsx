@@ -4,7 +4,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PublicationStatusBadge } from '@/components/publications/ItemCard';
 import { getProductPublicPath } from '@/constants/marketplace';
-import type { FeedMoveGroup, ActiveMoveSummary, FeedItem, PublishCtaProps } from '@/types/feed';
+import { getExplorePath } from '@/constants/feed';
+import { formatMoneyDisplay } from '@/lib/format/price';
+import type {
+  FeedMoveGroup,
+  ActiveMoveSummary,
+  FeedItem,
+  PublishCtaProps,
+  MoveFeedRowProps,
+  PublicHomeFeedProps,
+} from '@/types/feed';
 
 interface ProductTileProps {
   item: FeedItem;
@@ -48,7 +57,7 @@ export const ProductTile = ({ item, isAuthenticated }: ProductTileProps) => {
       <div className="space-y-1.5 p-2">
         <p className="truncate text-xs font-medium text-foreground">{item.name}</p>
         <p className="text-xs font-semibold text-teal-600">
-          ${item.price.toLocaleString('es-AR')}
+          {formatMoneyDisplay(item.price, item.currency)}
         </p>
         <span className="block border border-line px-2 py-0.5 text-center text-[10px] text-warm-muted transition-colors group-hover:border-teal-700 group-hover:text-teal-700">
           Ver
@@ -58,18 +67,23 @@ export const ProductTile = ({ item, isAuthenticated }: ProductTileProps) => {
   );
 };
 
-interface MoveFeedRowProps {
-  group: FeedMoveGroup;
-  isAuthenticated: boolean;
-}
-
-export const MoveFeedRow = ({ group, isAuthenticated }: MoveFeedRowProps) => (
+export const MoveFeedRow = ({ group, isAuthenticated, isOwnMove = false }: MoveFeedRowProps) => (
   <section className="space-y-2 border-t border-line pt-4">
     <div className="flex items-baseline justify-between gap-2 border-b border-line-soft pb-2">
-      <h2 className="text-sm font-semibold text-foreground">{group.moveTitle}</h2>
-      <span className="text-[10px] font-mono text-warm-muted">
-        {group.items.length} artículo{group.items.length !== 1 ? 's' : ''}
-      </span>
+      <div className="flex min-w-0 items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground">{group.moveTitle}</h2>
+        {isOwnMove && (
+          <Badge className="shrink-0 px-1.5 py-0 text-[10px] font-medium">Mi mudanza</Badge>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link href={getExplorePath(group.moveId)} className="text-xs text-teal-700">
+          Ver todos
+        </Link>
+        <span className="text-[10px] font-mono text-warm-muted">
+          {group.items.length} artículo{group.items.length !== 1 ? 's' : ''}
+        </span>
+      </div>
     </div>
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
       {group.items.map((item) => (
@@ -155,12 +169,13 @@ export const PublishCta = ({ isAuthenticated, ownerMoves = [] }: PublishCtaProps
   );
 };
 
-interface PublicHomeFeedProps {
-  feedGroups: FeedMoveGroup[];
-  isAuthenticated: boolean;
-}
+export const PublicHomeFeed = ({
+  feedGroups,
+  isAuthenticated,
+  ownerMoveIds = [],
+}: PublicHomeFeedProps) => {
+  const ownMoveIdSet = new Set(ownerMoveIds);
 
-export const PublicHomeFeed = ({ feedGroups, isAuthenticated }: PublicHomeFeedProps) => {
   if (feedGroups.length === 0) {
     return (
       <div className="border border-dashed border-line bg-surface p-8 text-center">
@@ -173,7 +188,12 @@ export const PublicHomeFeed = ({ feedGroups, isAuthenticated }: PublicHomeFeedPr
   return (
     <section className="space-y-5">
       {feedGroups.map((group) => (
-        <MoveFeedRow key={group.moveId} group={group} isAuthenticated={isAuthenticated} />
+        <MoveFeedRow
+          key={group.moveId}
+          group={group}
+          isAuthenticated={isAuthenticated}
+          isOwnMove={ownMoveIdSet.has(group.moveId)}
+        />
       ))}
     </section>
   );

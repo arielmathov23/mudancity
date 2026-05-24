@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
-import { ProductImageCarousel } from '@/components/publications/ProductImageCarousel';
-import { PublicationStatusBadge } from '@/components/publications/ItemCard';
-import { ShareProductButton } from '@/components/publications/ShareProductButton';
-import { ProductDetailActionsBar } from '@/components/publications/ProductDetailActionsBar';
+import { ProductVerticalFeed } from '@/components/publications/ProductVerticalFeed';
+import { getSessionProfile } from '@/lib/auth/session';
+import { getPublicFeedProductsFlat } from '@/repositories/feedRepository';
 import { getPublicProductBySlug } from '@/repositories/publicationRepository';
+import type { PublicFeedProduct } from '@/types/feed';
 
 interface PageProps {
   params: Promise<{ slug: string; itemId: string }>;
@@ -18,61 +18,59 @@ export const generateMetadata = async ({ params }: PageProps) => {
   };
 };
 
+const buildFeedWithCurrentProduct = (
+  feedProducts: PublicFeedProduct[],
+  current: PublicFeedProduct,
+): PublicFeedProduct[] => {
+  const existingIndex = feedProducts.findIndex(
+    (product) => product.publicSlug === current.publicSlug && product.id === current.id,
+  );
+
+  if (existingIndex >= 0) return feedProducts;
+
+  return [current, ...feedProducts];
+};
+
 export default async function PublicProductPage({ params }: PageProps) {
   const { slug, itemId } = await params;
-  const product = await getPublicProductBySlug(slug, itemId);
+  const [{ user }, product, feedProducts] = await Promise.all([
+    getSessionProfile(),
+    getPublicProductBySlug(slug, itemId),
+    getPublicFeedProductsFlat(),
+  ]);
+
   if (!product) notFound();
 
-  const { item, publication, moveTitle } = product;
-  const images = item.photoUrl ? [item.photoUrl] : [];
-  const mudanzaTag = `Parte de la mudanza ${moveTitle}`;
-  const customDescription =
-    publication.description && publication.description !== mudanzaTag
-      ? publication.description
-      : null;
+  const currentProduct: PublicFeedProduct = {
+    id: product.item.id,
+    moveId: product.publication.moveId,
+    publicationId: product.publication.id,
+    publicSlug: slug,
+    name: product.item.name,
+    price: product.item.price,
+    currency: product.item.currency,
+    description: product.item.description,
+    photoUrl: product.item.photoUrl,
+    status: product.publication.status,
+    moveTitle: product.moveTitle,
+    neighborhood: product.neighborhood,
+    city: product.city,
+    country: product.country,
+    publicationDescription: product.publication.description,
+    ownerId: product.publication.ownerId,
+  };
+
+  const products = buildFeedWithCurrentProduct(feedProducts, currentProduct);
+  const initialIndex = products.findIndex(
+    (item) => item.publicSlug === slug && item.id === itemId,
+  );
 
   return (
-    <AppShell
-      header={{
-        title: item.name,
-        description: moveTitle,
-        backHref: '/',
-        showBrand: false,
-        className: 'mb-2 border-b-0 pb-0',
-        actions: (
-          <>
-            <PublicationStatusBadge status={publication.status} compact />
-            <ShareProductButton
-              slug={slug}
-              itemId={itemId}
-              title={item.name}
-              compact
-            />
-          </>
-        ),
-      }}
-    >
-      <div className="space-y-3 pb-28">
-        <ProductImageCarousel images={images} alt={item.name} />
-
-        <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-          <p className="text-2xl font-bold text-teal-700">
-            ${item.price.toLocaleString('es-AR')}
-          </p>
-          <span className="max-w-[52%] border border-line px-2 py-1 text-right text-[10px] leading-snug text-warm-muted">
-            {mudanzaTag}
-          </span>
-        </div>
-
-        {customDescription && (
-          <p className="text-sm leading-relaxed text-warm-muted">{customDescription}</p>
-        )}
-      </div>
-
-      <ProductDetailActionsBar
-        slug={slug}
-        itemId={itemId}
-        isOpen={publication.status === 'open'}
+    <AppShell showNav contentClassName="overflow-hidden p-0 pt-0 pb-0">
+      <ProductVerticalFeed
+        products={products}
+        initialIndex={Math.max(initialIndex, 0)}
+        currentUserId={user?.id ?? null}
       />
     </AppShell>
   );

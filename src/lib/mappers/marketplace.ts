@@ -11,6 +11,9 @@ export const mapMove = (row: Record<string, unknown>) => ({
   id: row.id as string,
   ownerId: row.owner_id as string,
   title: row.title as string,
+  neighborhood: (row.neighborhood as string | null) ?? null,
+  city: (row.city as string | null) ?? null,
+  country: (row.country as string | null) ?? null,
   createdAt: row.created_at as string,
 });
 
@@ -32,6 +35,8 @@ export const mapItem = (row: Record<string, unknown>, photoUrl: string | null = 
   publicationId: row.publication_id as string,
   name: row.name as string,
   price: Number(row.price),
+  currency: (row.currency as string | undefined) ?? 'ARS',
+  description: (row.description as string | null) ?? null,
   photoPath: (row.photo_path as string | null) ?? null,
   photoUrl,
   sortOrder: Number(row.sort_order ?? 0),

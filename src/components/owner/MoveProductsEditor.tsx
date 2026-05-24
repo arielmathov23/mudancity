@@ -5,30 +5,41 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { Label } from '@/components/ui/label';
-import { ItemCard } from '@/components/publications/ItemCard';
+import { OwnerProductCard } from '@/components/owner/OwnerProductCard';
+import { MoveDetailsHeader } from '@/components/owner/MoveDetailsHeader';
+import { MoveDeleteDialog } from '@/components/owner/MoveDeleteDialog';
 import { CopyIcon } from '@/components/icons/NavIcons';
-import { ShareProductButton } from '@/components/publications/ShareProductButton';
 import { ImageDropzone } from '@/components/ui/ImageDropzone';
 import {
   addItemAction,
-  deleteItemAction,
   updatePublicationAction,
   uploadItemPhotoAction,
 } from '@/actions/marketplaceActions';
+import { Textarea } from '@/components/ui/textarea';
+import { DEFAULT_CURRENCY_CODE, PRODUCT_DESCRIPTION_MAX_LENGTH, type CurrencyCode } from '@/constants/marketplace';
+import { parsePriceRawToNumber } from '@/lib/format/price';
 import type { MoveProductsEditorProps } from '@/types/marketplace';
 
-export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProductsEditorProps) => {
+export const MoveProductsEditor = ({
+  move,
+  publication: initial,
+  offerCountsByItemId,
+}: MoveProductsEditorProps) => {
   const router = useRouter();
   const [publication, setPublication] = useState(initial);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY_CODE);
+  const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(initial.items.length === 0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const publicUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/p/${publication.publicSlug}`
@@ -61,6 +72,8 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
   const resetAddForm = () => {
     setName('');
     setPrice('');
+    setCurrency(DEFAULT_CURRENCY_CODE);
+    setDescription('');
     clearPhotos();
     setError(null);
     setShowAddForm(false);
@@ -74,7 +87,9 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
     const result = await addItemAction({
       publicationId: publication.id,
       name,
-      price: parseFloat(price),
+      price: parsePriceRawToNumber(price),
+      currency,
+      description: description.trim() || undefined,
     });
 
     if (!result.success) {
@@ -107,20 +122,6 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
     if (result.success) setPublication(result.data);
   };
 
-  const handlePhotoUpload = async (itemId: string, file: File) => {
-    const formData = new FormData();
-    formData.append('itemId', itemId);
-    formData.append('publicationId', publication.id);
-    formData.append('file', file);
-    await uploadItemPhotoAction(formData);
-    router.refresh();
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    await deleteItemAction(itemId, publication.id);
-    router.refresh();
-  };
-
   const copyUrl = async () => {
     await navigator.clipboard.writeText(publicUrl);
     setCopied(true);
@@ -130,14 +131,23 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-bold">{moveTitle}</h1>
-          <p className="text-sm text-warm-muted">Productos</p>
+        <MoveDetailsHeader move={move} />
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" variant="outline" onClick={handleToggleStatus}>
+            {publication.status === 'open' ? 'Pausar' : 'Publicar'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowDeleteDialog(true)}>
+            Eliminar
+          </Button>
         </div>
-        <Button size="sm" variant="outline" onClick={handleToggleStatus}>
-          {publication.status === 'open' ? 'Pausar' : 'Publicar'}
-        </Button>
       </div>
+
+      <MoveDeleteDialog
+        moveId={move.id}
+        moveTitle={move.title}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+      />
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -175,15 +185,25 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
           </div>
           <div className="space-y-2">
             <Label htmlFor="productPrice">Precio</Label>
-            <Input
+            <PriceInput
               id="productPrice"
-              placeholder="0"
-              type="number"
-              step="0.01"
-              min="0"
+              placeholder="Ej. 200.000"
               value={price}
+              currency={currency}
+              onCurrencyChange={setCurrency}
               onChange={(e) => setPrice(e.target.value)}
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="productDescription">Descripción (opcional)</Label>
+            <Textarea
+              id="productDescription"
+              placeholder="Ej. Muy buen estado, retiro por el barrio"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={PRODUCT_DESCRIPTION_MAX_LENGTH}
+              rows={3}
             />
           </div>
           <ImageDropzone
@@ -208,54 +228,38 @@ export const MoveProductsEditor = ({ moveTitle, publication: initial }: MoveProd
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" className="flex-1" onClick={resetAddForm}>
-              Cancelar
-            </Button>
             <Button type="submit" size="sm" className="flex-1" disabled={loading}>
               {loading ? 'Guardando...' : 'Agregar'}
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="flex-1" onClick={resetAddForm}>
+              Cancelar
             </Button>
           </div>
         </form>
       ) : (
-        <div className="space-y-2">
-          <h2 className="font-medium">
-            {publication.items.length === 0
-              ? 'Sin productos todavía'
-              : `${publication.items.length} producto${publication.items.length !== 1 ? 's' : ''}`}
-          </h2>
+        <div className="space-y-3">
+          <div className="border-b border-line-soft pb-2">
+            <h2 className="text-sm font-semibold text-foreground">Productos</h2>
+            {publication.items.length > 0 && (
+              <p className="text-xs text-warm-muted">
+                {publication.items.length} producto{publication.items.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
           {publication.items.length === 0 && (
             <p className="text-sm text-warm-muted">
               Tocá <span className="font-medium text-teal-600">Agregar producto</span> para cargar tus muebles.
             </p>
           )}
           {publication.items.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <ItemCard item={item} />
-              <div className="flex flex-wrap gap-2 px-1">
-                <label className="cursor-pointer">
-                  <span className="inline-flex h-8 items-center border border-line px-3 text-xs hover:bg-cream-100">
-                    Subir foto
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handlePhotoUpload(item.id, file);
-                    }}
-                  />
-                </label>
-                <ShareProductButton
-                  slug={publication.publicSlug}
-                  itemId={item.id}
-                  title={item.name}
-                />
-                <Button size="sm" variant="ghost" onClick={() => handleDeleteItem(item.id)}>
-                  Eliminar
-                </Button>
-              </div>
-            </div>
+            <OwnerProductCard
+              key={item.id}
+              item={item}
+              publicationId={publication.id}
+              publicSlug={publication.publicSlug}
+              status={publication.status}
+              offerCount={offerCountsByItemId[item.id] ?? 0}
+            />
           ))}
         </div>
       )}

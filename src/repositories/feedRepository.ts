@@ -2,14 +2,21 @@ import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
 import { getPhotoPublicUrl } from '@/lib/mappers/marketplace';
-import type { ActiveMoveSummary, FeedMoveGroup, FeedItem, OwnerMoveHomeSummary } from '@/types/feed';
+import type {
+  ActiveMoveSummary,
+  FeedMoveGroup,
+  FeedItem,
+  OwnerMoveHomeSummary,
+  PublicFeedProduct,
+  FeedProductsPage,
+} from '@/types/feed';
 
 export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => {
   const supabase = await createClient();
 
   const { data: publications, error } = await supabase
     .from('publications')
-    .select('id, move_id, public_slug, status, moves(id, title)')
+    .select('id, move_id, public_slug, status, moves(id, title, neighborhood, city, country)')
     .eq('status', 'open');
 
   if (error) throw new Error(error.message);
@@ -20,7 +27,7 @@ export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => 
 
   const { data: items, error: itemsError } = await supabase
     .from('items')
-    .select('id, publication_id, name, price, photo_path, sort_order')
+    .select('id, publication_id, name, price, currency, description, photo_path, sort_order')
     .in('publication_id', pubIds)
     .order('sort_order', { ascending: true });
 
@@ -33,7 +40,13 @@ export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => 
     const pub = pubById[item.publication_id];
     if (!pub || pub.status !== 'open') continue;
 
-    const move = pub.moves as { id: string; title: string } | null;
+    const move = pub.moves as {
+      id: string;
+      title: string;
+      neighborhood: string | null;
+      city: string | null;
+      country: string | null;
+    } | null;
     if (!move) continue;
 
     const feedItem: FeedItem = {
@@ -43,6 +56,8 @@ export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => 
       publicSlug: pub.public_slug,
       name: item.name,
       price: Number(item.price),
+      currency: (item.currency as string | undefined) ?? 'ARS',
+      description: (item.description as string | null) ?? null,
       photoUrl: getPhotoPublicUrl(item.photo_path),
       status: pub.status as 'open' | 'closed',
     };
@@ -54,12 +69,68 @@ export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => 
       groupMap.set(move.id, {
         moveId: move.id,
         moveTitle: move.title,
+        neighborhood: move.neighborhood,
+        city: move.city,
+        country: move.country,
         items: [feedItem],
       });
     }
   }
 
   return Array.from(groupMap.values());
+};
+
+export const getPublicFeedProductsFlat = async (): Promise<PublicFeedProduct[]> => {
+  const groups = await getPublicFeedGroupedByMove();
+
+  const supabase = await createClient();
+  const pubIds = [...new Set(groups.flatMap((g) => g.items.map((i) => i.publicationId)))];
+
+  let publicationMetaById: Record<string, { description: string | null; ownerId: string }> = {};
+  if (pubIds.length > 0) {
+    const { data, error } = await supabase
+      .from('publications')
+      .select('id, description, owner_id')
+      .in('id', pubIds);
+    if (error) throw new Error(error.message);
+    publicationMetaById = Object.fromEntries(
+      (data ?? []).map((p) => [p.id, { description: p.description, ownerId: p.owner_id as string }]),
+    );
+  }
+
+  return groups.flatMap((group) =>
+    group.items.map((item) => {
+      const meta = publicationMetaById[item.publicationId];
+      return {
+        ...item,
+        moveTitle: group.moveTitle,
+        neighborhood: group.neighborhood,
+        city: group.city,
+        country: group.country,
+        publicationDescription: meta?.description ?? null,
+        ownerId: meta?.ownerId ?? '',
+      };
+    }),
+  );
+};
+
+export const getPublicFeedProductsPage = async (params: {
+  moveId?: string;
+  offset: number;
+  limit: number;
+}): Promise<FeedProductsPage> => {
+  const allProducts = await getPublicFeedProductsFlat();
+  const filtered = params.moveId
+    ? allProducts.filter((product) => product.moveId === params.moveId)
+    : allProducts;
+
+  const products = filtered.slice(params.offset, params.offset + params.limit);
+
+  return {
+    products,
+    total: filtered.length,
+    hasMore: params.offset + params.limit < filtered.length,
+  };
 };
 
 export const getActiveMovesWithOffers = async (
@@ -90,7 +161,7 @@ export const getActiveMovesWithOffers = async (
   const [{ data: items }, { data: offers }] = await Promise.all([
     supabase
       .from('items')
-      .select('id, publication_id, name, price, photo_path, sort_order')
+      .select('id, publication_id, name, price, currency, description, photo_path, sort_order')
       .in('publication_id', pubIds)
       .order('sort_order', { ascending: true }),
     supabase.from('offers').select('id, publication_id').in('publication_id', pubIds),
@@ -127,6 +198,7 @@ export const getActiveMovesWithOffers = async (
       itemId: item.id,
       name: item.name,
       price: Number(item.price),
+      currency: (item.currency as string | undefined) ?? 'ARS',
       photoUrl: getPhotoPublicUrl(item.photo_path),
       publicSlug: pub.public_slug,
     };

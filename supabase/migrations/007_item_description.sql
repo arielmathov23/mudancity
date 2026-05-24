@@ -1,0 +1,3 @@
+-- Optional product description
+ALTER TABLE items
+  ADD COLUMN IF NOT EXISTS description TEXT;

@@ -3,13 +3,15 @@ import 'server-only';
 import { createServiceLogger } from '@/lib/logger';
 import type {
   CreateMoveInput,
+  UpdateMoveInput,
   CreatePublicationInput,
   UpdatePublicationInput,
   CreateItemInput,
+  UpdateItemInput,
   OnboardingInput,
 } from '@/lib/validation/schemas';
 import { updateProfileContact, updateProfileRole, getProfileById } from '@/repositories/profileRepository';
-import { createMove, getMoveById, getMovesByOwnerId } from '@/repositories/moveRepository';
+import { createMove, deleteMove, getMoveById, getMovesByOwnerId, updateMove } from '@/repositories/moveRepository';
 import {
   createPublication,
   updatePublication,
@@ -18,8 +20,10 @@ import {
   deleteItem,
   getPublicationById,
   getPublicationsByMoveId,
+  updateItem,
   updateItemPhoto,
 } from '@/repositories/publicationRepository';
+import { getOfferCountsByPublicationId } from '@/repositories/offerRepository';
 import { createClient } from '@/lib/supabase/server';
 import type { ServiceResult, Move, Publication, PublicationWithItems, Item, Profile, MoveWithProducts } from '@/types/marketplace';
 
@@ -50,7 +54,12 @@ export const createMoveWithAuth = async (
   input: CreateMoveInput,
 ): Promise<ServiceResult<Move>> => {
   await updateProfileRole(userId, 'owner');
-  const move = await createMove(userId, input.title);
+  const move = await createMove(userId, {
+    title: input.title,
+    neighborhood: input.neighborhood,
+    city: input.city,
+    country: input.country,
+  });
   await createPublication({
     moveId: move.id,
     ownerId: userId,
@@ -78,6 +87,43 @@ export const getMoveWithAuth = async (
   return { success: true, data: move };
 };
 
+export const updateMoveWithAuth = async (
+  userId: string,
+  moveId: string,
+  input: UpdateMoveInput,
+): Promise<ServiceResult<Move>> => {
+  const move = await getMoveById(moveId);
+  if (!move || move.ownerId !== userId) {
+    return { success: false, error: 'Mudanza no encontrada', status: 404 };
+  }
+
+  const updated = await updateMove(moveId, input);
+
+  if (input.title !== undefined) {
+    const publications = await getPublicationsByMoveId(moveId);
+    if (publications[0]) {
+      await updatePublication(publications[0].id, { title: input.title });
+    }
+  }
+
+  logger.info({ moveId }, 'Move updated');
+  return { success: true, data: updated };
+};
+
+export const deleteMoveWithAuth = async (
+  userId: string,
+  moveId: string,
+): Promise<ServiceResult<{ deleted: boolean }>> => {
+  const move = await getMoveById(moveId);
+  if (!move || move.ownerId !== userId) {
+    return { success: false, error: 'Mudanza no encontrada', status: 404 };
+  }
+
+  await deleteMove(moveId);
+  logger.info({ moveId, userId }, 'Move deleted');
+  return { success: true, data: { deleted: true } };
+};
+
 export const getMoveProductsWithAuth = async (
   userId: string,
   moveId: string,
@@ -102,7 +148,9 @@ export const getMoveProductsWithAuth = async (
     return { success: false, error: 'Error al cargar productos', status: 500 };
   }
 
-  return { success: true, data: { move: moveResult.data, publication } };
+  const offerCountsByItemId = await getOfferCountsByPublicationId(publication.id);
+
+  return { success: true, data: { move: moveResult.data, publication, offerCountsByItemId } };
 };
 
 export const createPublicationWithAuth = async (
@@ -190,6 +238,8 @@ export const addItemWithAuth = async (
     publicationId: input.publicationId,
     name: input.name,
     price: input.price,
+    currency: input.currency,
+    description: input.description?.trim() || null,
     photoPath: input.photoPath,
     sortOrder: publication.items.length,
   });
@@ -202,6 +252,30 @@ export const addItemWithAuth = async (
   }
 
   return { success: true, data: item };
+};
+
+export const updateItemWithAuth = async (
+  userId: string,
+  itemId: string,
+  input: UpdateItemInput,
+): Promise<ServiceResult<{ item: Item; publicSlug: string }>> => {
+  const publication = await getPublicationById(input.publicationId);
+  if (!publication || publication.ownerId !== userId) {
+    return { success: false, error: 'Publicación no encontrada', status: 404 };
+  }
+
+  const existing = publication.items.find((item) => item.id === itemId);
+  if (!existing) {
+    return { success: false, error: 'Producto no encontrado', status: 404 };
+  }
+
+  const item = await updateItem(itemId, {
+    name: input.name,
+    price: input.price,
+    currency: input.currency,
+    description: input.description?.trim() || null,
+  });
+  return { success: true, data: { item, publicSlug: publication.publicSlug } };
 };
 
 export const deleteItemWithAuth = async (

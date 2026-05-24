@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { EditIcon } from '@/components/icons/EditIcon';
 import type { MoveListCardProps } from '@/types/feed';
 
 export const MoveListCard = ({ move }: MoveListCardProps) => {
@@ -12,11 +13,19 @@ export const MoveListCard = ({ move }: MoveListCardProps) => {
   return (
     <Card>
       <CardContent className="space-y-3 pt-4">
-        <div>
-          <p className="font-medium text-neutral-900">{move.title}</p>
-          <p className="text-xs text-neutral-500">
-            {format(new Date(move.createdAt), "d MMM yyyy", { locale: es })} · {productLabel} · {offerLabel}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium text-neutral-900">{move.title}</p>
+            <p className="text-xs text-neutral-500">
+              {format(new Date(move.createdAt), "d MMM yyyy", { locale: es })} · {productLabel} · {offerLabel}
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
+            <Link href={`/mi-mudanza/${move.moveId}`}>
+              <EditIcon className="h-3.5 w-3.5" />
+              Editar
+            </Link>
+          </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" className="flex-1">

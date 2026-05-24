@@ -157,6 +157,8 @@ export const createItem = async (input: {
   publicationId: string;
   name: string;
   price: number;
+  currency?: string;
+  description?: string | null;
   photoPath?: string;
   sortOrder?: number;
 }): Promise<Item> => {
@@ -167,6 +169,8 @@ export const createItem = async (input: {
       publication_id: input.publicationId,
       name: input.name,
       price: input.price,
+      currency: input.currency ?? 'ARS',
+      description: input.description?.trim() || null,
       photo_path: input.photoPath ?? null,
       sort_order: input.sortOrder ?? 0,
     })
@@ -191,6 +195,28 @@ export const updateItemPhoto = async (itemId: string, photoPath: string): Promis
   if (error) throw new Error(error.message);
 };
 
+export const updateItem = async (
+  itemId: string,
+  input: { name: string; price: number; currency?: string; description?: string | null },
+): Promise<Item> => {
+  const supabase = await createClient();
+  const payload: Record<string, unknown> = {
+    name: input.name,
+    price: input.price,
+  };
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.description !== undefined) payload.description = input.description?.trim() || null;
+
+  const { data, error } = await supabase
+    .from('items')
+    .update(payload)
+    .eq('id', itemId)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return mapItem(data, getPhotoPublicUrl(data.photo_path));
+};
+
 export const getPublicProductBySlug = async (
   slug: string,
   itemId: string,
@@ -204,7 +230,7 @@ export const getPublicProductBySlug = async (
   const supabase = await createClient();
   const { data: move } = await supabase
     .from('moves')
-    .select('title')
+    .select('title, neighborhood, city, country')
     .eq('id', publication.moveId)
     .maybeSingle();
 
@@ -212,6 +238,9 @@ export const getPublicProductBySlug = async (
     item,
     publication,
     moveTitle: move?.title ?? publication.title,
+    neighborhood: (move?.neighborhood as string | null) ?? null,
+    city: (move?.city as string | null) ?? null,
+    country: (move?.country as string | null) ?? null,
   };
 };
 

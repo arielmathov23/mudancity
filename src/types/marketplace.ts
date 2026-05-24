@@ -20,6 +20,9 @@ export type Move = {
   id: string;
   ownerId: string;
   title: string;
+  neighborhood: string | null;
+  city: string | null;
+  country: string | null;
   createdAt: string;
 };
 
@@ -41,6 +44,8 @@ export type Item = {
   publicationId: string;
   name: string;
   price: number;
+  currency: string;
+  description: string | null;
   photoPath: string | null;
   photoUrl: string | null;
   sortOrder: number;
@@ -97,17 +102,41 @@ export type MoveKpis = {
 export type MoveWithProducts = {
   move: Move;
   publication: PublicationWithItems;
+  offerCountsByItemId: Record<string, number>;
 };
 
 export type MoveProductsEditorProps = {
-  moveTitle: string;
+  move: Move;
   publication: PublicationWithItems;
+  offerCountsByItemId: Record<string, number>;
+};
+
+export type MoveTitleEditorProps = {
+  move: Move;
+};
+
+export type MoveDetailsHeaderProps = {
+  move: Move;
+};
+
+export type MoveDeleteDialogProps = {
+  moveId: string;
+  moveTitle: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type MoveLocationEditorProps = {
+  move: Move;
 };
 
 export type PublicProductDetail = {
   item: Item;
   publication: Publication;
   moveTitle: string;
+  neighborhood: string | null;
+  city: string | null;
+  country: string | null;
 };
 
 export type ProductImageCarouselProps = {
@@ -133,6 +162,22 @@ export type ProductDetailActionsBarProps = {
 export type PublicationStatusBadgeProps = {
   status: PublicationStatus;
   compact?: boolean;
+};
+
+export type OwnerProductCardProps = {
+  item: Item;
+  publicationId: string;
+  publicSlug: string;
+  status: PublicationStatus;
+  offerCount: number;
+};
+
+export type ItemCardProps = {
+  item: Item;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggle?: (id: string) => void;
+  footer?: ReactNode;
 };
 
 export type ServiceResult<T> =

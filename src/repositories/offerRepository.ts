@@ -184,3 +184,27 @@ export const getAllOffersForOwner = async (ownerId: string): Promise<OfferWithDe
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 };
+
+export const getOfferCountsByPublicationId = async (
+  publicationId: string,
+): Promise<Record<string, number>> => {
+  const supabase = await createClient();
+  const { data: offers, error } = await supabase
+    .from('offers')
+    .select('id')
+    .eq('publication_id', publicationId);
+  if (error) throw new Error(error.message);
+  if (!offers?.length) return {};
+
+  const offerIds = offers.map((offer) => offer.id);
+  const { data: offerItems, error: itemsError } = await supabase
+    .from('offer_items')
+    .select('item_id')
+    .in('offer_id', offerIds);
+  if (itemsError) throw new Error(itemsError.message);
+
+  return (offerItems ?? []).reduce<Record<string, number>>((acc, row) => {
+    acc[row.item_id] = (acc[row.item_id] ?? 0) + 1;
+    return acc;
+  }, {});
+};

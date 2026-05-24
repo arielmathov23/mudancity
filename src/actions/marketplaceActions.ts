@@ -2,14 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAuthApp } from '@/lib/auth/verifyAuthApp';
-import { onboardingSchema, createMoveSchema, createPublicationSchema, createItemSchema } from '@/lib/validation/schemas';
+import { onboardingSchema, createMoveSchema, updateMoveSchema, createPublicationSchema, createItemSchema, updateItemSchema } from '@/lib/validation/schemas';
 import {
   completeOnboardingWithAuth,
   createMoveWithAuth,
+  updateMoveWithAuth,
+  deleteMoveWithAuth,
   createPublicationWithAuth,
   updatePublicationWithAuth,
   addItemWithAuth,
   deleteItemWithAuth,
+  updateItemWithAuth,
   uploadItemPhotoWithAuth,
   becomeOwnerWithAuth,
 } from '@/services/marketplaceService';
@@ -34,6 +37,30 @@ export const createMoveAction = async (input: unknown) => {
   if (!result.success) return { success: false as const, error: result.error };
   revalidatePath('/mi-mudanza');
   revalidatePath(`/mi-mudanza/${result.data.id}`);
+  return { success: true as const, data: result.data };
+};
+
+export const updateMoveAction = async (moveId: string, input: unknown) => {
+  const user = await requireAuthApp();
+  const parsed = updateMoveSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: parsed.error.errors[0]?.message ?? 'Datos inválidos' };
+
+  const result = await updateMoveWithAuth(user.id, moveId, parsed.data);
+  if (!result.success) return { success: false as const, error: result.error };
+  revalidatePath('/mi-mudanza');
+  revalidatePath(`/mi-mudanza/${moveId}`);
+  revalidatePath('/');
+  return { success: true as const, data: result.data };
+};
+
+export const deleteMoveAction = async (moveId: string) => {
+  const user = await requireAuthApp();
+  const result = await deleteMoveWithAuth(user.id, moveId);
+  if (!result.success) return { success: false as const, error: result.error };
+
+  revalidatePath('/mi-mudanza');
+  revalidatePath('/');
+  revalidatePath('/explorar');
   return { success: true as const, data: result.data };
 };
 
@@ -69,6 +96,20 @@ export const addItemAction = async (input: unknown) => {
   revalidatePath('/mi-mudanza');
   revalidatePath(`/owner/publicaciones/${parsed.data.publicationId}`);
   return { success: true as const, data: result.data };
+};
+
+export const updateItemAction = async (itemId: string, input: unknown) => {
+  const user = await requireAuthApp();
+  const parsed = updateItemSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: parsed.error.errors[0]?.message ?? 'Datos inválidos' };
+
+  const result = await updateItemWithAuth(user.id, itemId, parsed.data);
+  if (!result.success) return { success: false as const, error: result.error };
+
+  revalidatePath('/mi-mudanza');
+  revalidatePath(`/owner/publicaciones/${parsed.data.publicationId}`);
+  revalidatePath(`/p/${result.data.publicSlug}`);
+  return { success: true as const, data: result.data.item };
 };
 
 export const deleteItemAction = async (itemId: string, publicationId: string) => {

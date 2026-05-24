@@ -15,4 +15,5 @@ export type AppShellProps = {
   children: ReactNode;
   showNav?: boolean;
   header?: AppHeaderProps;
+  contentClassName?: string;
 };

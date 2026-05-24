@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { Label } from '@/components/ui/label';
 import { ItemCard } from '@/components/publications/ItemCard';
 import { CopyIcon } from '@/components/icons/NavIcons';
@@ -106,7 +107,7 @@ export const PublicationEditor = ({ publication: initial }: PublicationEditorPro
       <form onSubmit={handleAddItem} className="space-y-3 border border-neutral-200 bg-white p-4">
         <h2 className="font-medium">Agregar ítem</h2>
         <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required />
-        <Input placeholder="Precio" type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
+        <PriceInput placeholder="Precio" value={price} onChange={(e) => setPrice(e.target.value)} required />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" size="sm">Agregar</Button>
       </form>

@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { Label } from '@/components/ui/label';
 import { ItemCard } from '@/components/publications/ItemCard';
 import { useCreateOffer } from '@/hooks/useOffers';
@@ -70,7 +70,7 @@ export const OfferForm = ({ publicationId, items, isOpen, preselectedItemId }: O
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="offeredPrice">Precio ofrecido</Label>
-        <Input id="offeredPrice" type="number" step="0.01" placeholder="150000" {...register('offeredPrice')} />
+        <PriceInput id="offeredPrice" placeholder="Ej. 150.000" {...register('offeredPrice')} />
         {errors.offeredPrice && <p className="text-xs text-red-600">{errors.offeredPrice.message}</p>}
       </div>
 

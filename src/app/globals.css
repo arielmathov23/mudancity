@@ -59,3 +59,18 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+.product-feed-scroll {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.product-feed-slide {
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  flex-shrink: 0;
+}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { setAuthNextCookie } from '@/lib/auth/redirect';
 import { createClient } from '@/lib/supabase/client';
 import { AuthShell } from '@/components/layout/AuthShell';
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
@@ -42,9 +43,10 @@ export const LoginForm = () => {
 
   const handleGoogle = async () => {
     const supabase = createClient();
+    setAuthNextCookie(next);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   };
 
