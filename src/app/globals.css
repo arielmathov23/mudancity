@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f1e8;
+  --foreground: #2a2420;
+  --surface: #fffdf8;
+  --line: #2a2420;
+  --line-soft: #c9bfb0;
+  --muted: #6f665c;
+  --primary: 174 72% 40%;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-cream: #f6f1e8;
+  --color-cream-50: #fdfbf7;
+  --color-cream-100: #f0e9dd;
+  --color-cream-200: #e4d9c8;
+  --color-surface: #fffdf8;
+  --color-line: #2a2420;
+  --color-line-soft: #c9bfb0;
+  --color-warm-muted: #6f665c;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.glass-card {
+  background-color: rgba(255, 253, 248, 0.75);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid var(--line);
+}
+
+.nav-glass {
+  background-color: rgba(253, 251, 247, 0.94);
+  border-top: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.app-divider {
+  border-top: 1px solid var(--line);
+}
+
+.app-divider-soft {
+  border-top: 1px solid var(--line-soft);
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
