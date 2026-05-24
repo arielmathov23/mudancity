@@ -1,4 +1,4 @@
-import type { PublicationStatus } from '@/types/marketplace';
+import type { PublicationStatus, BuyerOffer, OfferWithDetails } from '@/types/marketplace';
 
 export type FeedItem = {
   id: string;
@@ -117,4 +117,9 @@ export type FeedProductsQuery = {
   moveId?: string;
   offset: number;
   limit: number;
+};
+
+export type HomeOffersSectionProps = {
+  sentOffers: BuyerOffer[];
+  receivedOffers: OfferWithDetails[];
 };

@@ -54,6 +54,15 @@ export const OFFER_RESPONSE_LABELS = {
   rejected: 'Rechazada',
 } as const;
 
+export const OFFER_SENT_STATUS_LABELS = {
+  pending: 'Pendiente',
+  coordinated: 'Coordinado',
+} as const;
+
+export const OFFER_RECEIVED_STATUS_LABELS = {
+  awaiting: 'Sin responder',
+} as const;
+
 export const getProductPublicPath = (publicSlug: string, itemId: string) =>
   `/p/${publicSlug}/${itemId}`;
 

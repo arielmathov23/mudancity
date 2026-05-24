@@ -1,16 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { OfferList } from '@/components/offers/OfferList';
-import {
-  COORDINATION_STATUS_LABELS,
-  OFFER_RESPONSE_LABELS,
-} from '@/constants/marketplace';
+import { SentOfferCard } from '@/components/buyer/SentOfferCard';
 import { useQuery } from '@tanstack/react-query';
 import { authenticatedFetch } from '@/lib/authenticatedFetch';
 import { useOwnerOffers } from '@/hooks/useOffers';
@@ -68,32 +60,7 @@ export const MyOffersContent = ({ defaultTab = 'sent', isOwner = false }: MyOffe
             <p className="text-sm text-warm-muted">Todavía no enviaste ofertas.</p>
           )}
           {sentOffers?.map((offer) => (
-            <Card key={offer.id}>
-              <CardContent className="space-y-2 pt-4">
-                <div className="flex justify-between gap-2">
-                  <p className="font-medium">{offer.publicationTitle}</p>
-                  <p className="font-semibold text-teal-600">
-                    ${offer.offeredPrice.toLocaleString('es-AR')}
-                  </p>
-                </div>
-                <p className="text-xs text-warm-muted">
-                  {format(new Date(offer.createdAt), "d MMM yyyy HH:mm", { locale: es })}
-                </p>
-                {offer.response && (
-                  <Badge variant={offer.response === 'accepted' ? 'open' : 'closed'}>
-                    {OFFER_RESPONSE_LABELS[offer.response]}
-                  </Badge>
-                )}
-                {offer.coordinationStatus && (
-                  <Badge variant={offer.coordinationStatus === 'coordinated' ? 'coordinated' : 'pending'}>
-                    {COORDINATION_STATUS_LABELS[offer.coordinationStatus]}
-                  </Badge>
-                )}
-                <Link href={`/p/${offer.publicationSlug}`} className="text-xs text-teal-600">
-                  Ver publicación →
-                </Link>
-              </CardContent>
-            </Card>
+            <SentOfferCard key={offer.id} offer={offer} />
           ))}
         </>
       )}

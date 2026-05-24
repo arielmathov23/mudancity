@@ -83,6 +83,31 @@ export type BuyerOffer = Offer & {
   coordinatedAt: string | null;
 };
 
+export type SentOfferStatusVariant = 'open' | 'closed' | 'pending' | 'coordinated';
+
+export type SentOfferStatusDisplay = {
+  label: string;
+  variant: SentOfferStatusVariant;
+};
+
+export type SentOfferCardProps = {
+  offer: BuyerOffer;
+};
+
+export type ReceivedOfferCardProps = {
+  offer: OfferWithDetails;
+};
+
+export type OfferPreviewCardProps = {
+  title: string;
+  metaLabel?: string | null;
+  createdAt: string;
+  offeredPrice: number;
+  status: SentOfferStatusDisplay;
+  href: string;
+  actionLabel: string;
+};
+
 export type MoveKpis = {
   moveId: string;
   moveTitle: string;

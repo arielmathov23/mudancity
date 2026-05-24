@@ -1,17 +1,21 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
+import { HomeOffersSection } from '@/components/home/HomeOffersSection';
 import { PublishCta, PublicHomeFeed } from '@/components/home/HomeFeed';
 import { getExplorePath } from '@/constants/feed';
 import { getPublicFeedGroupedByMove, getOwnerMovesForHome } from '@/repositories/feedRepository';
+import { getOffersByBuyerId, getAllOffersForOwner } from '@/repositories/offerRepository';
 import { getSessionProfile } from '@/lib/auth/session';
 
 export default async function HomePage() {
   const { user } = await getSessionProfile();
   const isAuthenticated = !!user;
 
-  const [feedGroups, ownerMoves] = await Promise.all([
+  const [feedGroups, ownerMoves, sentOffers, receivedOffers] = await Promise.all([
     getPublicFeedGroupedByMove(),
     user ? getOwnerMovesForHome(user.id) : Promise.resolve([]),
+    user ? getOffersByBuyerId(user.id) : Promise.resolve([]),
+    user ? getAllOffersForOwner(user.id) : Promise.resolve([]),
   ]);
   const openFeed = feedGroups.filter((group) => group.items.length > 0);
   const ownerMoveIds = ownerMoves.map((move) => move.moveId);
@@ -26,6 +30,10 @@ export default async function HomePage() {
       <div className="mb-6">
         <PublishCta isAuthenticated={isAuthenticated} ownerMoves={ownerMoves} />
       </div>
+
+      {isAuthenticated && (
+        <HomeOffersSection sentOffers={sentOffers} receivedOffers={receivedOffers} />
+      )}
 
       <div className="mb-3 flex items-end justify-between gap-2">
         <div>
