@@ -151,6 +151,7 @@ export type ShareProductButtonProps = {
   itemId: string;
   title: string;
   compact?: boolean;
+  fullWidth?: boolean;
 };
 
 export type ProductDetailActionsBarProps = {

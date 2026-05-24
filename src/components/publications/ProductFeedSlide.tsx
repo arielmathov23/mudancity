@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { LocationIcon } from '@/components/icons/LocationIcon';
+import { ShareProductButton } from '@/components/publications/ShareProductButton';
 import { formatMoneyDisplay } from '@/lib/format/price';
 import { formatMoveLocation } from '@/lib/location';
 import { PRODUCT_FEED_DETAILS_RESERVE } from '@/constants/productFeed';
@@ -74,9 +75,12 @@ export const ProductFeedSlide = ({ product, isPriority = false, isOwner = false 
             <Link href={`/p/${product.publicSlug}/ofertar?item=${product.id}`}>Ofertar</Link>
           </Button>
         ) : product.status === 'open' && isOwner ? (
-          <p className="py-2 text-center text-sm text-warm-muted">
-            Este es tu producto — no podés ofertar en tu propia publicación
-          </p>
+          <ShareProductButton
+            slug={product.publicSlug}
+            itemId={product.id}
+            title={product.name}
+            fullWidth
+          />
         ) : (
           <p className="py-2 text-center text-sm text-warm-muted">Este producto no acepta ofertas</p>
         )}

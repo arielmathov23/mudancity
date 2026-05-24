@@ -7,7 +7,13 @@ import { getProductPublicPath, COMPACT_CHIP_CLASS } from '@/constants/marketplac
 import { cn } from '@/lib/utils/cn';
 import type { ShareProductButtonProps } from '@/types/marketplace';
 
-export const ShareProductButton = ({ slug, itemId, title, compact = false }: ShareProductButtonProps) => {
+export const ShareProductButton = ({
+  slug,
+  itemId,
+  title,
+  compact = false,
+  fullWidth = false,
+}: ShareProductButtonProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
@@ -28,15 +34,20 @@ export const ShareProductButton = ({ slug, itemId, title, compact = false }: Sha
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const label = copied ? 'Link copiado' : 'Compartir';
+
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={fullWidth ? 'default' : 'outline'}
       onClick={handleShare}
-      className={cn(compact ? COMPACT_CHIP_CLASS : 'h-8 px-3 text-xs', 'gap-1')}
+      className={cn(
+        fullWidth ? 'h-11 w-full gap-2' : compact ? COMPACT_CHIP_CLASS : 'h-8 px-3 text-xs',
+        !fullWidth && 'gap-1',
+      )}
     >
-      <ShareIcon className={cn(compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} />
-      {copied ? 'Copiado' : 'Compartir'}
+      <ShareIcon className={cn(fullWidth ? 'h-4 w-4' : compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} />
+      {label}
     </Button>
   );
 };
