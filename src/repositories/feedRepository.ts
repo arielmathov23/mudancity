@@ -33,7 +33,9 @@ export const getPublicFeedGroupedByMove = async (): Promise<FeedMoveGroup[]> => 
     const pub = pubById[item.publication_id];
     if (!pub || pub.status !== 'open') continue;
 
-    const move = pub.moves as { id: string; title: string };
+    const move = pub.moves as { id: string; title: string } | null;
+    if (!move) continue;
+
     const feedItem: FeedItem = {
       id: item.id,
       moveId: move.id,
