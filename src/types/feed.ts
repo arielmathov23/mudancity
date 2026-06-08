@@ -88,6 +88,14 @@ export type ProductFeedSlideProps = {
   isOwner?: boolean;
 };
 
+export type ProductPhotoViewerProps = {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
 export type ProductVerticalFeedProps = {
   products: PublicFeedProduct[];
   initialIndex: number;

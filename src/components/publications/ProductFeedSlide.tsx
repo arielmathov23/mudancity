@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { LocationIcon } from '@/components/icons/LocationIcon';
+import { ProductPhotoViewer } from '@/components/publications/ProductPhotoViewer';
 import { ShareProductButton } from '@/components/publications/ShareProductButton';
 import { formatMoneyDisplay } from '@/lib/format/price';
 import { formatMoveLocation } from '@/lib/location';
@@ -27,13 +27,11 @@ export const ProductFeedSlide = ({ product, isPriority = false, isOwner = false 
         style={{ maxHeight: `calc(100% - ${PRODUCT_FEED_DETAILS_RESERVE})` }}
       >
         {product.photoUrl ? (
-          <Image
+          <ProductPhotoViewer
             src={product.photoUrl}
             alt={product.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 480px) 100vw, 420px"
             priority={isPriority}
+            className="h-full w-full"
           />
         ) : (
           <div className="flex h-full min-h-[40dvh] items-center justify-center px-6 text-center text-sm text-warm-muted">
