@@ -64,13 +64,26 @@ export const useProductFeedSnap = ({
     return () => resizeObserver.disconnect();
   }, [containerRef, slideCount]);
 
+  const pendingInitialScrollRef = useRef(true);
+
+  useEffect(() => {
+    activeIndexRef.current = initialIndex;
+    onActiveIndexChangeRef.current(initialIndex);
+    pendingInitialScrollRef.current = true;
+  }, [initialIndex]);
+
   useEffect(() => {
     if (slideHeight <= 0) return;
 
-    activeIndexRef.current = initialIndex;
-    const frame = requestAnimationFrame(() => scrollToIndexRef.current(initialIndex));
+    if (pendingInitialScrollRef.current) {
+      pendingInitialScrollRef.current = false;
+      const frame = requestAnimationFrame(() => scrollToIndexRef.current(initialIndex));
+      return () => cancelAnimationFrame(frame);
+    }
+
+    const frame = requestAnimationFrame(() => scrollToIndexRef.current(activeIndexRef.current));
     return () => cancelAnimationFrame(frame);
-  }, [initialIndex, slideHeight]);
+  }, [slideHeight, initialIndex]);
 
   useEffect(() => {
     const container = containerRef.current;
